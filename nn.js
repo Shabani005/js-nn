@@ -162,31 +162,12 @@ class NeuralNet {
     const layers = data.layers.map(layer => layer.fromJSON(learning_rate));
     return new NeuralNet(layers);
   };
-
+  
+  writeJSON(file_name){
+    const nnet_json = JSON.stringify(this.toJSON(), null, 2);
+    fs.writeFileSync(file_name, nnet_json, "utf-8");
+  }
 }
 
-const X = [
-  [0, 0],
-  [0, 1],
-  [1, 0],
-  [1, 1]
-];
+export { Neuron, Layer, NeuralNet };
 
-const y = [0, 1, 1, 0];
-
-const net = new NeuralNet(
-  [
-    new Layer(2, 2),
-    new Layer(2, 1)
-  ]
-);
-
-net.fit(X, y);
-
-console.log("0 XOR 0 =", net.predict([0, 0])[0]);
-console.log("0 XOR 1 =", net.predict([0, 1])[0]);
-console.log("1 XOR 0 =", net.predict([1, 0])[0]);
-console.log("1 XOR 1 =", net.predict([1, 1])[0]);
-
-const nnet_json = JSON.stringify(net.toJSON(), null, 2);
-fs.writeFileSync("XOR_json.json", nnet_json, "utf-8");
