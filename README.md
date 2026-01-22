@@ -2,5 +2,5 @@
 
 - Instructions:
 ```bash
-  node ./examples/XOR.js
+  node ./examples/XOR.mjs
 ```

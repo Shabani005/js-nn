@@ -1,6 +1,6 @@
 import fs from "fs";
 
-class Neuron {
+export class Neuron {
   constructor(input_len, learning_rate=0.1){
     this.learning_rate = learning_rate;
     this.weights = Array(input_len).fill(0).map(() => Math.random() * 2-1);
@@ -71,7 +71,7 @@ class Neuron {
   }
 }
 
-class Layer {
+export class Layer {
   constructor(input_size, neuron_count, learning_rate=0.1){
     this.input_size = input_size;
     this.neurons = Array.from(
@@ -118,7 +118,7 @@ class Layer {
   }
 }
 
-class NeuralNet {
+export class NeuralNet {
   constructor(layers){
     this.layers = layers;
   }
@@ -169,5 +169,5 @@ class NeuralNet {
   }
 }
 
-export { Neuron, Layer, NeuralNet };
+// module.exports { Neuron, Layer, NeuralNet };
 
