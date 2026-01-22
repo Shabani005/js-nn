@@ -1,25 +1,34 @@
+import fs from "fs";
+
 class Neuron {
   constructor(input_len, learning_rate=0.1){
     this.learning_rate = learning_rate;
-    this.weights = Array(input_len).fill(0);
+    this.weights = Array(input_len).fill(0).map(() => Math.random() * 2-1);
     this.bias = 0;
   }
 
   sigmoid(z){
     return 1 / (1 + Math.exp(-z));
   }
+  
+  sigmoid_deriv(z){
+    return z * (1 - z);
+  }
 
   predict(inputs){
+    this.inputs = inputs;
     let z = this.bias;
 
     for (let i =0; i<this.weights.length; i+=1){
       z+= this.weights[i] * inputs[i];
     }
-    return this.sigmoid(z);
+    this.output = this.sigmoid(z);
+    return this.output;
   }
 
   train(inputs, target){
     const output = this.predict(inputs);
+
     const error = output-target;
 
     for (let i=0; i<this.weights.length; i+=1){
@@ -35,6 +44,125 @@ class Neuron {
       }
     }
   }
+
+  backward(err){
+    const delta = err * this.sigmoid_deriv(this.output);
+
+    for (let i=0; i<this.weights.length; i+=1){
+      this.weights[i] -= this.learning_rate * delta * this.inputs[i];
+    }
+    this.bias -= this.learning_rate * delta;
+
+    return delta;
+  }
+
+  toJSON() {
+    return {
+      weights: this.weights,
+      bias: this.bias
+    };
+  }
+
+  fromJSON(data, learning_rate=0.1){
+    const neuron = new Neuron(data.weights.length, learning_rate);
+    neuron.weights = data.weights;
+    neuron.bias = data.bias;
+    return neuron;
+  }
+}
+
+class Layer {
+  constructor(input_size, neuron_count, learning_rate=0.1){
+    this.input_size = input_size;
+    this.neurons = Array.from(
+      { length: neuron_count },
+      () => new Neuron(input_size, learning_rate)
+    );
+  }
+
+  forward(inputs){
+    return this.neurons.map(neuron => neuron.predict(inputs));
+  }
+
+  backward(errs){
+    // const errs = Array(this.neurons[0].weights.length).fill(0);
+    const prev_errs = Array(this.input_size).fill(0);
+
+    for (let i=0; i<this.neurons.length; i+=1){
+      const delta = this.neurons[i].backward(errs[i]);
+
+      for (let j=0; j<this.neurons[i].weights.length; j+=1){
+        prev_errs[j] += this.neurons[i].weights[j] * delta;
+      }
+    }
+    return prev_errs;
+  }
+
+  toJSON() {
+    return {
+      input_size: this.input_size,
+      neurons: this.neurons.map((neuron) => neuron.toJSON())
+    };
+  }
+
+  fromJSON(data, learning_rate=0.1) {
+    const layer = new Layer(
+      data.input_size,
+      data.neurons.length,
+      learning_rate
+    );
+
+    layer.neurons = data.neurons.map(neuron => neuron.fromJSON(learning_rate));
+
+    return layer;
+  }
+}
+
+class NeuralNet {
+  constructor(layers){
+    this.layers = layers;
+  }
+
+  predict(inputs){
+    let output = inputs;
+
+    for (const layer of this.layers){
+      output = layer.forward(output);
+    }
+    return output;
+  }
+
+  train(inputs, targets){
+    const outputs = this.predict(inputs);
+
+    let errs = outputs.map(
+      (output, i) => output - targets[i]
+    );
+
+    for (let i=this.layers.length-1; i>=0; i-=1){
+      errs = this.layers[i].backward(errs);
+    }
+  }
+
+  fit(X, y, epochs=10000){
+    for (let epoch=0; epoch<epochs; epoch+=1){
+      for (let i=0; i<X.length; ++i){
+        this.train(X[i], [y[i]]);
+      }
+    }
+  }
+
+  toJSON() {
+    return {
+      layers: this.layers.map(layer => layer.toJSON())
+    };
+  }
+
+  fromJSON(data, learning_rate=0.1) {
+    const layers = data.layers.map(layer => layer.fromJSON(learning_rate));
+    return new NeuralNet(layers);
+  };
+
 }
 
 const X = [
@@ -42,13 +170,23 @@ const X = [
   [0, 1],
   [1, 0],
   [1, 1]
-]
+];
 
-const y = [0, 0, 0, 1];
+const y = [0, 1, 1, 0];
 
-const neuron = new Neuron(X[0].length);
+const net = new NeuralNet(
+  [
+    new Layer(2, 2),
+    new Layer(2, 1)
+  ]
+);
 
-neuron.fit(X, y);
+net.fit(X, y);
 
-console.log(neuron.predict([1, 1]));
-console.log(neuron.predict([0, 0]));
+console.log("0 XOR 0 =", net.predict([0, 0])[0]);
+console.log("0 XOR 1 =", net.predict([0, 1])[0]);
+console.log("1 XOR 0 =", net.predict([1, 0])[0]);
+console.log("1 XOR 1 =", net.predict([1, 1])[0]);
+
+const nnet_json = JSON.stringify(net.toJSON(), null, 2);
+fs.writeFileSync("XOR_json.json", nnet_json, "utf-8");
