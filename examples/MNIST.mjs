@@ -1,18 +1,7 @@
 import { NeuralNet, Layer } from "../nn.mjs";
 import mnist from "mnist";
 
-/*
-  Load MNIST
-  - training set: 800 samples
-  - test set: 200 samples
-*/
 const { training, test } = mnist.set(800, 200);
-
-/*
-  Each image:
-  - 28x28 = 784 inputs
-  - Labels are one-hot encoded (length 10)
-*/
 
 const net = new NeuralNet([
   new Layer(784, 64, 0.05),
@@ -45,9 +34,6 @@ for (let epoch = 0; epoch < 20; epoch += 1) {
   );
 }
 
-/*
-  Test evaluation
-*/
 let testCorrect = 0;
 
 for (const sample of test) {
