@@ -112,8 +112,10 @@ export class Layer {
       learning_rate
     );
 
-    layer.neurons = data.neurons.map(neuron => neuron.fromJSON(learning_rate));
-
+    layer.neurons = data.neurons.map(neuron => 
+      new Neuron(neuron.weights.length, learning_rate).
+      fromJSON(neuron, learning_rate)
+    );
     return layer;
   }
 }
@@ -159,7 +161,13 @@ export class NeuralNet {
   }
 
   fromJSON(data, learning_rate=0.1) {
-    const layers = data.layers.map(layer => layer.fromJSON(learning_rate));
+    const layers = data.layers.map(layer => 
+      new Layer(
+        layer.input_size,
+        layer.neurons.length,
+        learning_rate
+      ).fromJSON(layer, learning_rate)
+    );
     return new NeuralNet(layers);
   };
   

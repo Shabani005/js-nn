@@ -53,3 +53,5 @@ const testAccuracy = (testCorrect / test.length) * 100;
 console.log(
   `Test accuracy: ${testAccuracy.toFixed(2)}%`
 );
+
+net.writeJSON("MNIST.json");
